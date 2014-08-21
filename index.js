@@ -30,22 +30,29 @@ function serve(root){
     return function* staticFolder(next){
         var file = finalFiles[this.path];
         if(!file) return yield * next;
-        return yield send(this, file, {root: __dirname});
+        return yield send(this, file);
     }
 }
 
-function walk(directory, finalFiles) {
-    var finalFiles = finalFiles || [];
+function walk(root, directory, finalFiles) {
+    var finalFiles = finalFiles || {} ;
+    if(!directory) {
+        directory = root ;
+        var separator = (root.lastIndexOf("/") >  root.lastIndexOf("\\")) ? "/" : "\\" ;
+        root = root.substring(0, root.lastIndexOf(separator));
+    }
+
     var files = fs.readdirSync(directory);
     for(var i=0; i<files.length; i++) {
         var file = files[i];
         if(!file) continue;
         file = directory + '/' + file;
         if(fs.statSync(file).isDirectory()) {
-            walk(file, finalFiles);
+            walk(root, file, finalFiles);
         }
         else {
-            finalFiles[file.replace('.', '')] = file;
+            var fileKey = file.replace(root, '') ;
+            finalFiles[fileKey] = file;
         }
     }
     return finalFiles;
